@@ -54,18 +54,27 @@
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
             {{ formatLabel(voice.key) }}
           </h3>
+          <IndicativeTimeline
+            v-if="indicatifTimeline(voice).length"
+            :items="indicatifTimeline(voice)"
+            :format-label="formatLabel"
+          />
           <div class="grid gap-4 md:grid-cols-2">
-            <UCard v-for="section in voice.sections" :key="section.key" class="space-y-3">
+            <UCard v-for="section in voice.sections" :key="section.key" class="space-y-2">
               <h4 class="text-lg font-medium text-gray-900 dark:text-white">
                 {{ formatLabel(section.key) }}
               </h4>
-              <div v-for="tense in section.tenses" :key="tense.key" class="space-y-2">
-                <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">
+              <div v-for="tense in section.tenses" :key="tense.key" class="space-y-1">
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   {{ formatLabel(tense.key) }}
                 </p>
-                <ul class="space-y-1 text-sm text-gray-700 dark:text-gray-200">
-                  <li v-for="form in tense.forms" :key="form.label + form.value" class="flex gap-2">
-                    <span v-if="form.label" class="min-w-[3rem] font-medium text-gray-500 dark:text-gray-400">
+                <ul class="space-y-0.5 text-xs text-gray-700 dark:text-gray-200">
+                  <li
+                    v-for="form in tense.forms"
+                    :key="form.label + form.value"
+                    class="grid grid-cols-[minmax(2.5rem,3.5rem)_1fr] gap-2"
+                  >
+                    <span v-if="form.label" class="font-medium text-gray-500 dark:text-gray-400">
                       {{ form.label }}
                     </span>
                     <span>{{ form.value }}</span>
@@ -82,6 +91,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import IndicativeTimeline from './components/IndicativeTimeline.vue';
 import { findVerbEntry } from './repositories/verbRepository';
 
 const query = ref('');
@@ -194,4 +204,68 @@ const voiceSections = computed(() => {
       };
     });
 });
+
+const indicatifTimelineOrder = [
+  'plus_que_parfait',
+  'passe_anterieur',
+  'passe_compose',
+  'passe_simple',
+  'imparfait',
+  'present',
+  'futur_simple',
+  'futur_anterieur',
+];
+
+const indicatifTimelineLabels: Record<string, string> = {
+  plus_que_parfait: 'Plus-que-parfait',
+  passe_anterieur: 'Passé antérieur',
+  passe_compose: 'Passé composé',
+  passe_simple: 'Passé simple',
+  imparfait: 'Imparfait',
+  present: 'Présent',
+  futur_simple: 'Futur simple',
+  futur_anterieur: 'Futur antérieur',
+};
+
+const indicatifTimeline = (voice: {
+  key: string;
+  sections: Array<{
+    key: string;
+    tenses: Array<{ key: string; forms: Array<{ label: string; value: string }> }>;
+  }>;
+}) => {
+  return indicatifTimelineOrder
+    .map((tenseKey) => {
+      const sections = voice.sections
+        .map((section) => {
+          const tense = section.tenses.find((item) => item.key === tenseKey);
+
+          if (!tense) {
+            return null;
+          }
+
+          return {
+            key: section.key,
+            forms: tense.forms,
+          };
+        })
+        .filter((section): section is { key: string; forms: Array<{ label: string; value: string }> } =>
+          Boolean(section)
+        );
+
+      if (!sections.length) {
+        return null;
+      }
+
+      return {
+        key: tenseKey,
+        label: indicatifTimelineLabels[tenseKey] ?? formatLabel(tenseKey),
+        sections,
+      };
+    })
+    .filter(
+      (item): item is { key: string; label: string; sections: Array<{ key: string; forms: Array<{ label: string; value: string }> }> } =>
+        Boolean(item)
+    );
+};
 </script>
