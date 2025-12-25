@@ -1,87 +1,40 @@
 <template>
-  <UApp>
-    <UContainer class="py-10 space-y-8">
-      <header class="space-y-2">
-        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">French Verb Conjugator</h1>
-        <p class="text-gray-500 dark:text-gray-400">
-          Search for a verb to see its conjugations. The first match will appear as an inline suggestion.
-        </p>
-      </header>
+  <UApp class="h-full flex flex-col w-full">
+    <section class="space-y-4 p-6">
+      <div class="relative">
+        <UInput id="verb-search" v-model="query" icon="i-heroicons-magnifying-glass" size="lg"
+          placeholder="Start typing a verb..." autocomplete="off" class="relative z-10 w-full"
+          @keydown.tab.prevent="acceptSuggestion" @keydown.enter.prevent="acceptSuggestion" />
+      </div>
+    </section>
 
-      <section class="space-y-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="verb-search">
-          Verb search
-        </label>
-        <div class="relative">
-          <div
-            v-if="suggestion"
-            class="pointer-events-none absolute inset-0 flex items-center px-3 py-2 text-gray-400 dark:text-gray-500"
-          >
-            <span class="text-transparent select-none">{{ query }}</span>
-            <span class="select-none">{{ suggestionRemainder }}</span>
-          </div>
-          <UInput
-            id="verb-search"
-            v-model="query"
-            icon="i-heroicons-magnifying-glass"
-            size="lg"
-            placeholder="Start typing a verb..."
-            autocomplete="off"
-            class="relative z-10 w-full"
-            @keydown.tab.prevent="acceptSuggestion"
-            @keydown.enter.prevent="acceptSuggestion"
-          />
+    <div class="flex-1 h-full flex w-full">
+      <p v-if="isLoading" class="text-sm text-gray-500">Searching…</p>
+      <p v-else-if="query && !currentCandidate" class="text-sm text-gray-500">
+        No matches found yet. Try a different spelling.
+      </p>
+
+      <section v-if="currentCandidate" class="space-y-6 mt-12 w-full p-6">
+        <h2 class="text-3xl font-semibold text-gray-900 dark:text-white">
+          {{ currentCandidate.verb }}
+        </h2>
+
+        <div class="flex-1 h-full w-full">
+         <div v-for="voice in voiceSections" :key="voice.key" class="h-full w-full">
+          <UScrollArea :ui="{ root: 'w-full h-full flex justify-center items-center', viewport: 'w-full' }" orientation="horizontal">
+            <IndicativeTimeline v-if="indicatifTimeline(voice).length" :items="indicatifTimeline(voice)"
+              :format-label="formatLabel"/>
+          </UScrollArea>
         </div>
-        <p v-if="isLoading" class="text-sm text-gray-500">Searching…</p>
-        <p v-else-if="query && !currentCandidate" class="text-sm text-gray-500">
-          No matches found yet. Try a different spelling.
-        </p>
-      </section>
-
-      <section v-if="currentCandidate" class="space-y-6">
-        <UCard>
-          <div class="flex flex-wrap items-center gap-3">
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">
-              {{ currentCandidate.verb }}
-            </h2>
-            <UBadge v-if="currentCandidate.score !== undefined" color="primary" variant="subtle">
-              Match score: {{ formatScore(currentCandidate.score) }}
-            </UBadge>
-          </div>
-        </UCard>
-
-        <div v-for="voice in voiceSections" :key="voice.key" class="space-y-4">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ formatLabel(voice.key) }}
-          </h3>
-          <div class="grid gap-4 md:grid-cols-2">
-            <UCard v-for="section in voice.sections" :key="section.key" class="space-y-3">
-              <h4 class="text-lg font-medium text-gray-900 dark:text-white">
-                {{ formatLabel(section.key) }}
-              </h4>
-              <div v-for="tense in section.tenses" :key="tense.key" class="space-y-2">
-                <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">
-                  {{ formatLabel(tense.key) }}
-                </p>
-                <ul class="space-y-1 text-sm text-gray-700 dark:text-gray-200">
-                  <li v-for="form in tense.forms" :key="form.label + form.value" class="flex gap-2">
-                    <span v-if="form.label" class="min-w-[3rem] font-medium text-gray-500 dark:text-gray-400">
-                      {{ form.label }}
-                    </span>
-                    <span>{{ form.value }}</span>
-                  </li>
-                </ul>
-              </div>
-            </UCard>
-          </div>
         </div>
       </section>
-    </UContainer>
+    </div>
   </UApp>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import IndicativeTimeline from './components/IndicativeTimeline.vue';
 import { findVerbEntry } from './repositories/verbRepository';
 
 const query = ref('');
@@ -194,4 +147,68 @@ const voiceSections = computed(() => {
       };
     });
 });
+
+const indicatifTimelineOrder = [
+  'plus_que_parfait',
+  'passe_anterieur',
+  'passe_compose',
+  'passe_simple',
+  'imparfait',
+  'present',
+  'futur_anterieur',
+  'futur_simple',
+];
+
+const indicatifTimelineLabels: Record<string, string> = {
+  plus_que_parfait: 'Plus-que-parfait',
+  passe_anterieur: 'Passé antérieur',
+  passe_compose: 'Passé composé',
+  passe_simple: 'Passé simple',
+  imparfait: 'Imparfait',
+  present: 'Présent',
+  futur_simple: 'Futur simple',
+  futur_anterieur: 'Futur antérieur',
+};
+
+const indicatifTimeline = (voice: {
+  key: string;
+  sections: Array<{
+    key: string;
+    tenses: Array<{ key: string; forms: Array<{ label: string; value: string }> }>;
+  }>;
+}) => {
+  return indicatifTimelineOrder
+    .map((tenseKey) => {
+      const sections = voice.sections
+        .map((section) => {
+          const tense = section.tenses.find((item) => item.key === tenseKey);
+
+          if (!tense) {
+            return null;
+          }
+
+          return {
+            key: section.key,
+            forms: tense.forms,
+          };
+        })
+        .filter((section): section is { key: string; forms: Array<{ label: string; value: string }> } =>
+          Boolean(section)
+        );
+
+      if (!sections.length) {
+        return null;
+      }
+
+      return {
+        key: tenseKey,
+        label: indicatifTimelineLabels[tenseKey] ?? formatLabel(tenseKey),
+        sections,
+      };
+    })
+    .filter(
+      (item): item is { key: string; label: string; sections: Array<{ key: string; forms: Array<{ label: string; value: string }> }> } =>
+        Boolean(item)
+    );
+};
 </script>
