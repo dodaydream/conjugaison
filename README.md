@@ -2,6 +2,11 @@
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
+## Data Source
+
+https://github.com/ShingZhanho/verbe-conjugaison-academie-francaise
+https://github.com/ShingZhanho/verbe-conjugaison-academie-francaise/releases/tag/v0.2
+
 ## Setup
 
 Make sure to install dependencies:
