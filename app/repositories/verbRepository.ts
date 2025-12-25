@@ -11,6 +11,7 @@ type VerbSearchResult = {
 
 let verbDictionaryPromise: Promise<VerbDictionary> | null = null;
 let fusePromise: Promise<Fuse<string>> | null = null;
+let verbFormIndexPromise: Promise<Map<string, string>> | null = null;
 
 const loadVerbDictionary = async (): Promise<VerbDictionary> => {
   if (!verbDictionaryPromise) {
@@ -18,6 +19,49 @@ const loadVerbDictionary = async (): Promise<VerbDictionary> => {
   }
 
   return verbDictionaryPromise;
+};
+
+const addFormValues = (value: unknown, forms: Set<string>): void => {
+  if (typeof value === 'string') {
+    const normalizedValue = value.trim().toLowerCase();
+
+    if (normalizedValue) {
+      forms.add(normalizedValue);
+    }
+
+    return;
+  }
+
+  if (Array.isArray(value)) {
+    value.forEach((item) => addFormValues(item, forms));
+    return;
+  }
+
+  if (value && typeof value === 'object') {
+    Object.values(value).forEach((item) => addFormValues(item, forms));
+  }
+};
+
+const loadVerbFormIndex = async (): Promise<Map<string, string>> => {
+  if (!verbFormIndexPromise) {
+    verbFormIndexPromise = loadVerbDictionary().then((dictionary) => {
+      const index = new Map<string, string>();
+
+      Object.entries(dictionary).forEach(([verb, entry]) => {
+        const forms = new Set<string>();
+        addFormValues(entry, forms);
+        forms.forEach((form) => {
+          if (!index.has(form)) {
+            index.set(form, verb);
+          }
+        });
+      });
+
+      return index;
+    });
+  }
+
+  return verbFormIndexPromise;
 };
 
 const loadFuse = async (): Promise<Fuse<string>> => {
@@ -47,6 +91,17 @@ export const findVerbEntry = async (query: string): Promise<VerbSearchResult | n
 
   if (exactMatch) {
     return { verb: normalizedQuery, entry: exactMatch };
+  }
+
+  const formIndex = await loadVerbFormIndex();
+  const matchedVerb = formIndex.get(normalizedQuery);
+
+  if (matchedVerb) {
+    const entry = dictionary[matchedVerb];
+
+    if (entry) {
+      return { verb: matchedVerb, entry };
+    }
   }
 
   const fuse = await loadFuse();
