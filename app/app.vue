@@ -1,17 +1,6 @@
 <template>
   <UApp>
-    <UContainer class="py-10 space-y-8">
-      <header class="space-y-2">
-        <h1 class="text-3xl font-semibold text-gray-900 dark:text-white">French Verb Conjugator</h1>
-        <p class="text-gray-500 dark:text-gray-400">
-          Search for a verb to see its conjugations. The first match will appear as an inline suggestion.
-        </p>
-      </header>
-
       <section class="space-y-4">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300" for="verb-search">
-          Verb search
-        </label>
         <div class="relative">
           <div
             v-if="suggestion"
@@ -106,6 +95,7 @@
               <h4 class="text-lg font-medium text-gray-900 dark:text-white">
                 {{ formatLabel(section.key) }}
               </h4>
+              <div class="grid gap-2 grid-cols-4">
               <div v-for="tense in section.tenses" :key="tense.key" class="space-y-1">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   {{ formatLabel(tense.key) }}
@@ -123,11 +113,11 @@
                   </li>
                 </ul>
               </div>
+              </div>
             </UCard>
           </div>
         </div>
       </section>
-    </UContainer>
   </UApp>
 </template>
 
