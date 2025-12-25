@@ -54,18 +54,50 @@
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
             {{ formatLabel(voice.key) }}
           </h3>
+          <div
+            v-if="indicatifTimeline(voice).length"
+            class="rounded-lg border border-gray-200 bg-white/60 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900/40"
+          >
+            <div class="flex flex-col gap-3">
+              <div>
+                <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">Indicative timeline</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  A quick view of indicative tenses from past to future.
+                </p>
+              </div>
+              <div class="relative">
+                <div class="absolute inset-x-0 top-1/2 h-px bg-gray-200 dark:bg-gray-700"></div>
+                <div class="relative flex items-center justify-between gap-2">
+                  <div
+                    v-for="item in indicatifTimeline(voice)"
+                    :key="item.key"
+                    class="flex max-w-[5.5rem] flex-1 flex-col items-center gap-2 text-center"
+                  >
+                    <span class="h-2.5 w-2.5 rounded-full bg-primary-500 ring-4 ring-primary-100 dark:ring-primary-950"></span>
+                    <span class="text-[0.7rem] font-medium uppercase tracking-wide text-gray-600 dark:text-gray-300">
+                      {{ item.label }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
           <div class="grid gap-4 md:grid-cols-2">
-            <UCard v-for="section in voice.sections" :key="section.key" class="space-y-3">
+            <UCard v-for="section in voice.sections" :key="section.key" class="space-y-2">
               <h4 class="text-lg font-medium text-gray-900 dark:text-white">
                 {{ formatLabel(section.key) }}
               </h4>
-              <div v-for="tense in section.tenses" :key="tense.key" class="space-y-2">
-                <p class="text-sm font-semibold text-gray-600 dark:text-gray-300">
+              <div v-for="tense in section.tenses" :key="tense.key" class="space-y-1">
+                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   {{ formatLabel(tense.key) }}
                 </p>
-                <ul class="space-y-1 text-sm text-gray-700 dark:text-gray-200">
-                  <li v-for="form in tense.forms" :key="form.label + form.value" class="flex gap-2">
-                    <span v-if="form.label" class="min-w-[3rem] font-medium text-gray-500 dark:text-gray-400">
+                <ul class="space-y-0.5 text-xs text-gray-700 dark:text-gray-200">
+                  <li
+                    v-for="form in tense.forms"
+                    :key="form.label + form.value"
+                    class="grid grid-cols-[minmax(2.5rem,3.5rem)_1fr] gap-2"
+                  >
+                    <span v-if="form.label" class="font-medium text-gray-500 dark:text-gray-400">
                       {{ form.label }}
                     </span>
                     <span>{{ form.value }}</span>
@@ -194,4 +226,40 @@ const voiceSections = computed(() => {
       };
     });
 });
+
+const indicatifTimelineOrder = [
+  'plus_que_parfait',
+  'passe_anterieur',
+  'passe_compose',
+  'passe_simple',
+  'imparfait',
+  'present',
+  'futur_simple',
+  'futur_anterieur',
+];
+
+const indicatifTimelineLabels: Record<string, string> = {
+  plus_que_parfait: 'Plus-que-parfait',
+  passe_anterieur: 'Passé antérieur',
+  passe_compose: 'Passé composé',
+  passe_simple: 'Passé simple',
+  imparfait: 'Imparfait',
+  present: 'Présent',
+  futur_simple: 'Futur simple',
+  futur_anterieur: 'Futur antérieur',
+};
+
+const indicatifTimeline = (voice: { sections: Array<{ key: string; tenses: Array<{ key: string }> }> }) => {
+  const indicatif = voice.sections.find((section) => section.key === 'indicatif');
+
+  if (!indicatif) {
+    return [];
+  }
+
+  const available = new Set(indicatif.tenses.map((tense) => tense.key));
+
+  return indicatifTimelineOrder
+    .filter((key) => available.has(key))
+    .map((key) => ({ key, label: indicatifTimelineLabels[key] ?? formatLabel(key) }));
+};
 </script>
