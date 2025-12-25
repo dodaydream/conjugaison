@@ -72,6 +72,7 @@ const loadFuse = async (): Promise<Fuse<string>> => {
         includeScore: true,
         threshold: 0.3,
         ignoreLocation: true,
+        ignoreDiacritics: true
       });
     });
   }
