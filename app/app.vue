@@ -43,59 +43,16 @@
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
             {{ formatLabel(voice.key) }}
           </h3>
-          <div
+          <IndicativeTimeline
             v-if="indicatifTimeline(voice).length"
-            class="rounded-lg border border-gray-200 bg-white/60 p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900/40"
-          >
-            <div class="flex flex-col gap-3">
-              <div>
-                <p class="text-sm font-semibold text-gray-800 dark:text-gray-100">Indicative timeline</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">
-                  Scroll horizontally to explore all tenses at a glance.
-                </p>
-              </div>
-              <div class="relative overflow-hidden">
-                <div class="absolute inset-x-0 top-5 h-px bg-gray-200 dark:bg-gray-700"></div>
-                <div class="flex gap-4 overflow-x-auto pb-2">
-                  <div
-                    v-for="item in indicatifTimeline(voice)"
-                    :key="item.key"
-                    class="relative flex w-44 flex-none flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm dark:border-gray-700 dark:bg-gray-900"
-                  >
-                    <div class="flex items-center gap-2">
-                      <span class="h-2.5 w-2.5 rounded-full bg-primary-500 ring-4 ring-primary-100 dark:ring-primary-950"></span>
-                      <p class="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-gray-300">
-                        {{ item.label }}
-                      </p>
-                    </div>
-                    <div v-for="section in item.sections" :key="section.key" class="space-y-1">
-                      <p class="text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                        {{ formatLabel(section.key) }}
-                      </p>
-                      <ul class="space-y-0.5 text-xs text-gray-700 dark:text-gray-200">
-                        <li
-                          v-for="form in section.forms"
-                          :key="form.label + form.value"
-                          class="grid grid-cols-[minmax(2.5rem,3.5rem)_1fr] gap-2"
-                        >
-                          <span v-if="form.label" class="font-medium text-gray-500 dark:text-gray-400">
-                            {{ form.label }}
-                          </span>
-                          <span>{{ form.value }}</span>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+            :items="indicatifTimeline(voice)"
+            :format-label="formatLabel"
+          />
           <div class="grid gap-4 md:grid-cols-2">
             <UCard v-for="section in voice.sections" :key="section.key" class="space-y-2">
               <h4 class="text-lg font-medium text-gray-900 dark:text-white">
                 {{ formatLabel(section.key) }}
               </h4>
-              <div class="grid gap-2 grid-cols-4">
               <div v-for="tense in section.tenses" :key="tense.key" class="space-y-1">
                 <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
                   {{ formatLabel(tense.key) }}
@@ -123,6 +80,7 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import IndicativeTimeline from './components/IndicativeTimeline.vue';
 import { findVerbEntry } from './repositories/verbRepository';
 
 const query = ref('');
