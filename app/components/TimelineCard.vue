@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative flex w-44 flex-none flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm dark:border-gray-700 dark:bg-gray-900"
+    class="relative flex w-96 flex-none flex-col gap-2 rounded-lg border border-gray-200 bg-white p-3 text-left shadow-sm dark:border-gray-700 dark:bg-gray-900"
   >
     <div class="flex items-center gap-2">
       <span class="h-2.5 w-2.5 rounded-full bg-primary-500 ring-4 ring-primary-100 dark:ring-primary-950"></span>
@@ -8,7 +8,8 @@
         {{ item.label }}
       </p>
     </div>
-    <div v-for="section in item.sections" :key="section.key" class="space-y-1">
+    <div class="grid grid-cols-2 gap-1">
+    <div v-for="section in item.sections" :key="section.key">
       <p class="text-[0.7rem] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
         {{ formatLabel(section.key) }}
       </p>
@@ -25,6 +26,7 @@
         </li>
       </ul>
     </div>
+        </div>
   </div>
 </template>
 

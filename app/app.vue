@@ -1,80 +1,34 @@
 <template>
-  <UApp>
-      <section class="space-y-4">
-        <div class="relative">
-          <div
-            v-if="suggestion"
-            class="pointer-events-none absolute inset-0 flex items-center px-3 py-2 text-gray-400 dark:text-gray-500"
-          >
-            <span class="text-transparent select-none">{{ query }}</span>
-            <span class="select-none">{{ suggestionRemainder }}</span>
-          </div>
-          <UInput
-            id="verb-search"
-            v-model="query"
-            icon="i-heroicons-magnifying-glass"
-            size="lg"
-            placeholder="Start typing a verb..."
-            autocomplete="off"
-            class="relative z-10 w-full"
-            @keydown.tab.prevent="acceptSuggestion"
-            @keydown.enter.prevent="acceptSuggestion"
-          />
+  <UApp class="h-full flex flex-col w-full">
+    <section class="space-y-4 p-6">
+      <div class="relative">
+        <UInput id="verb-search" v-model="query" icon="i-heroicons-magnifying-glass" size="lg"
+          placeholder="Start typing a verb..." autocomplete="off" class="relative z-10 w-full"
+          @keydown.tab.prevent="acceptSuggestion" @keydown.enter.prevent="acceptSuggestion" />
+      </div>
+    </section>
+
+    <div class="flex-1 h-full flex w-full">
+      <p v-if="isLoading" class="text-sm text-gray-500">Searching…</p>
+      <p v-else-if="query && !currentCandidate" class="text-sm text-gray-500">
+        No matches found yet. Try a different spelling.
+      </p>
+
+      <section v-if="currentCandidate" class="space-y-6 mt-12 w-full p-6">
+        <h2 class="text-3xl font-semibold text-gray-900 dark:text-white">
+          {{ currentCandidate.verb }}
+        </h2>
+
+        <div class="flex-1 h-full w-full">
+         <div v-for="voice in voiceSections" :key="voice.key" class="h-full w-full">
+          <UScrollArea :ui="{ root: 'w-full h-full flex justify-center items-center', viewport: 'w-full' }" orientation="horizontal">
+            <IndicativeTimeline v-if="indicatifTimeline(voice).length" :items="indicatifTimeline(voice)"
+              :format-label="formatLabel"/>
+          </UScrollArea>
         </div>
-        <p v-if="isLoading" class="text-sm text-gray-500">Searching…</p>
-        <p v-else-if="query && !currentCandidate" class="text-sm text-gray-500">
-          No matches found yet. Try a different spelling.
-        </p>
-      </section>
-
-      <section v-if="currentCandidate" class="space-y-6">
-        <UCard>
-          <div class="flex flex-wrap items-center gap-3">
-            <h2 class="text-2xl font-semibold text-gray-900 dark:text-white">
-              {{ currentCandidate.verb }}
-            </h2>
-            <UBadge v-if="currentCandidate.score !== undefined" color="primary" variant="subtle">
-              Match score: {{ formatScore(currentCandidate.score) }}
-            </UBadge>
-          </div>
-        </UCard>
-
-        <div v-for="voice in voiceSections" :key="voice.key" class="space-y-4">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white">
-            {{ formatLabel(voice.key) }}
-          </h3>
-          <IndicativeTimeline
-            v-if="indicatifTimeline(voice).length"
-            :items="indicatifTimeline(voice)"
-            :format-label="formatLabel"
-          />
-          <div class="grid gap-4 md:grid-cols-2">
-            <UCard v-for="section in voice.sections" :key="section.key" class="space-y-2">
-              <h4 class="text-lg font-medium text-gray-900 dark:text-white">
-                {{ formatLabel(section.key) }}
-              </h4>
-              <div v-for="tense in section.tenses" :key="tense.key" class="space-y-1">
-                <p class="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                  {{ formatLabel(tense.key) }}
-                </p>
-                <ul class="space-y-0.5 text-xs text-gray-700 dark:text-gray-200">
-                  <li
-                    v-for="form in tense.forms"
-                    :key="form.label + form.value"
-                    class="grid grid-cols-[minmax(2.5rem,3.5rem)_1fr] gap-2"
-                  >
-                    <span v-if="form.label" class="font-medium text-gray-500 dark:text-gray-400">
-                      {{ form.label }}
-                    </span>
-                    <span>{{ form.value }}</span>
-                  </li>
-                </ul>
-              </div>
-              </div>
-            </UCard>
-          </div>
         </div>
       </section>
+    </div>
   </UApp>
 </template>
 
@@ -201,8 +155,8 @@ const indicatifTimelineOrder = [
   'passe_simple',
   'imparfait',
   'present',
-  'futur_simple',
   'futur_anterieur',
+  'futur_simple',
 ];
 
 const indicatifTimelineLabels: Record<string, string> = {
